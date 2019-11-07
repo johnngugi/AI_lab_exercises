@@ -1,0 +1,9 @@
+engine,turbo,weight,fueleco,fast
+large,no,average,bad,yes
+small,no,light,average,yes
+small,yes,average,bad,no
+large,no,heavy,bad,no
+large,no,average,bad,yes
+large,no,light,bad,yes
+large,yes,heavy,bad,yes
+small,no,average,average,no
