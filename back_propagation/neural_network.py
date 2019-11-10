@@ -14,14 +14,14 @@ def sigmoid_derivative(p):
 
 
 class NeuralNetwork:
-    def __init__(self, x, y):
+    def __init__(self, x, y, learning_rate):
         self.input = x
         self.bind_values(x)
-        self.weights1 = np.random.rand(self.input.shape[1], 2)
-        self.weights2 = np.random.rand(2, 1)
-        self.y = y
+        self.weights1 = [[0.2, 0.3, 0.2], [0.1, 0.1, 0.1]]
+        self.weights2 = [[0.5, 0.1]]
+        self.target = y
         self.bind_values(y)
-        self.output = np.zeros(y.shape)
+        self.learning_rate = learning_rate
 
     def bind_values(self, values):
         min_value = values[np.unravel_index(
@@ -35,20 +35,54 @@ class NeuralNetwork:
         np.put(values, range(values.size), new_values)
 
     def feed_foward(self):
-        self.layer1 = sigmoid(np.dot(self.input, self.weights1))
-        self.layer2 = sigmoid(np.dot(self.layer1, self.weights2))
-        return self.layer2
+        new_inputs = []
+        for epoch in self.input:
+            epoch = np.array(epoch, ndmin=2).T
+            layer1 = sigmoid(np.dot(self.weights1, epoch))
+            layer2 = sigmoid(np.dot(self.weights2, layer1))
+            new_inputs.append(layer2)
 
-    def back_prop(self):
-        d_weights2 = np.dot(
-            self.layer1.T, (2*(self.y - self.output) * sigmoid_derivative(self.output)))
-        d_weights1 = np.dot(self.input.T,  (np.dot(2*(self.y - self.output) * sigmoid_derivative(
-            self.output), self.weights2.T) * sigmoid_derivative(self.layer1)))
+        return new_inputs
 
-        # update the weights with the derivative (slope) of the loss function
-        self.weights1 += d_weights1
-        self.weights2 += d_weights2
+    def back_prop(self, input, target):
+        target_vector = np.array(target, ndmin=2).T
+        input = np.array(input, ndmin=2).T
 
-    def train(self, X, y):
-        self.output = self.feed_foward()
-        self.back_prop()
+        output_vector1 = np.dot(self.weights1, input)
+        output_vector_hidden = sigmoid(output_vector1)
+
+        output_vector2 = np.dot(
+            self.weights2, output_vector_hidden)
+        output_vector_network = sigmoid(output_vector2)
+
+        output_errors = target_vector - output_vector_network
+
+        print("Input: \n", input)
+        print("Expected: ", target)
+        print("Actual: ", output_vector_network)
+        print("Error :", output_errors, "\n")
+
+        # update the weights:
+        tmp = output_errors * output_vector_network * \
+            (1.0 - output_vector_network)
+
+        tmp = self.learning_rate * np.dot(tmp, output_vector_hidden.T)
+
+        self.weights2 += tmp
+
+        # calculate hidden errors:
+        hidden_errors = np.dot(self.weights2.T, output_errors)
+
+        # update the weights:
+        tmp = hidden_errors * output_vector_hidden * \
+            (1.0 - output_vector_hidden)
+        self.weights1 += self.learning_rate * \
+            np.dot(tmp, input.T)
+
+    def train(self):
+        for i in range(len(self.input)):
+            self.back_prop(self.input[i], self.target[i])
+
+    def print_matrices(self):
+        print("Layer 1: ", self.weights1)
+        print("Layer 2: ", self.weights2)
