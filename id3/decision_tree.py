@@ -1,3 +1,7 @@
+from collections import Mapping
+
+import matplotlib.pyplot as plt
+import networkx as nx
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (accuracy_score, classification_report,
@@ -37,8 +41,7 @@ class DecisionTree:
         return total_entropy - weighted_entropy
 
     def id3(self, data, originaldata, features, target_attribute_name="fast", parent_node_class=None):
-        # determine root node
-        # If all target_values have the same value, return this value
+
         data_dimensions = np.unique(data[target_attribute_name])
         if len(data_dimensions) <= 1:
             return data_dimensions[0]
@@ -61,7 +64,6 @@ class DecisionTree:
             features = [i for i in features if i != best_feature]
 
             for value in np.unique(data[best_feature]):
-                value = value
                 sub_data = data.where(data[best_feature] == value).dropna()
                 subtree = self.id3(sub_data, data, features,
                                    target_attribute_name, parent_node_class)
@@ -116,3 +118,18 @@ class DecisionTree:
         print("Accuracy: ", accuracy, "\n")
         print("Classification Report: \n")
         print(classification)
+
+    def draw_graph(self, tree):
+        g = nx.Graph()
+
+        q = list(tree.items())
+
+        while q:
+            v, d = q.pop()
+            for nv, nd in d.items():
+                g.add_edge(v, nv)
+                if isinstance(nd, Mapping):
+                    q.append((nv, nd))
+
+        nx.draw(g, with_labels=True)
+        plt.show()
